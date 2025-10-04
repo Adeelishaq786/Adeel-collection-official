@@ -1,0 +1,221 @@
+import { useState, ChangeEvent } from "react";
+import { Button } from "/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "/components/ui/card";
+import { Input } from "/components/ui/input";
+import { Label } from "/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  description: string;
+  imageUrl: string;
+}
+
+export default function ProductUploadWebsite() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const newProduct: Product = {
+      id: Date.now().toString(),
+      name,
+      category,
+      price,
+      description,
+      imageUrl: imagePreview || "https://placeholder-image-service.onrender.com/image/400x300?prompt=Generic product placeholder image&id=190799fb-9a07-481e-a4f5-86d7dbc7f7e5"
+    };
+    
+    setProducts([...products, newProduct]);
+    setName("");
+    setCategory("");
+    setPrice("");
+    setDescription("");
+    setImagePreview(null);
+    setShowSuccess(true);
+    
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">My Product Store</h1>
+          <p className="text-muted-foreground">
+            Upload and manage your products in one place
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Product Upload Form */}
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle>Add New Product</CardTitle>
+              <CardDescription>
+                Fill in the details of your product below
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product-image">Product Image</Label>
+                  <Input 
+                    id="product-image" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange}
+                  />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview of selected product image" 
+                        className="h-40 object-cover rounded-md border"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product-name">Product Name</Label>
+                  <Input
+                    id="product-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter product name"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product-category">Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="air-parts">Air Parts</SelectItem>
+                      <SelectItem value="shirts">Shirts</SelectItem>
+                      <SelectItem value="electronics">Electronics</SelectItem>
+                      <SelectItem value="accessories">Accessories</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product-price">Price ($)</Label>
+                  <Input
+                    id="product-price"
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="Enter price"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="product-description">Description</Label>
+                  <Textarea
+                    id="product-description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe your product..."
+                    rows={3}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">
+                  Upload Product
+                </Button>
+              </form>
+
+              {showSuccess && (
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-md">
+                  Product uploaded successfully!
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Product Gallery */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Products</CardTitle>
+                <CardDescription>
+                  {products.length} product{products.length !== 1 ? 's' : ''} uploaded
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {products.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No products uploaded yet</p>
+                    <p className="text-sm mt-2">
+                      Upload your first product using the form on the left
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto">
+                    {products.map((product) => (
+                      <Card key={product.id} className="overflow-hidden">
+                        <div className="flex">
+                          <div className="w-24 h-24 flex-shrink-0">
+                            <img
+                              src={product.imageUrl}
+                              alt={`Preview of ${product.name}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-4 flex-grow">
+                            <h3 className="font-semibold text-foreground">{product.name}</h3>
+                            <p className="text-sm text-muted-foreground capitalize">{product.category}</p>
+                            <p className="text-primary font-medium mt-1">${product.price}</p>
+                            {product.description && (
+                              <p className="text-sm mt-2 line-clamp-2">{product.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
